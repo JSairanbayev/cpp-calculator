@@ -1,64 +1,96 @@
-﻿#include <iostream>
-#include <limits>
+#include "calculator.h"
+#include <iostream>
+#include <cmath>
+#include <string>
+#include <sstream>
 
-int main() {
-    double num1, num2;
-    char operation;
-    char repeat;
+bool ReadNumber(Number& result) {
+    if (!(std::cin >> result)) {
+        return false;
+    }
+    return true;
+}
 
-    std::cout << "=== Console Calculator ===" << std::endl;
-
-    do {
-        // Input first number
-        std::cout << "\nEnter first number: ";
-        while (!(std::cin >> num1)) {
-            std::cout << "Error! Enter a valid number: ";
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+bool RunCalculatorCycle() {
+    Number accumulator = 0;
+    Number memory = 0;
+    bool has_memory = false;
+    bool first_token = true;  
+    
+    std::string token;
+    while (std::cin >> token) {
+        
+        std::istringstream iss(token);
+        Number num;
+        if (iss >> num && iss.eof()) {
+            accumulator = num;
+            first_token = false;
+            continue;
         }
 
-        // Input operation
-        std::cout << "Enter operation (+, -, *, /): ";
-        std::cin >> operation;
-
-        // Input second number
-        std::cout << "Enter second number: ";
-        while (!(std::cin >> num2)) {
-            std::cout << "Error! Enter a valid number: ";
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        if (first_token) {
+            std::cerr << "Error: Numeric operand expected" << std::endl;
+            return false;
         }
 
-        // Calculate result
-        switch (operation) {
-        case '+':
-            std::cout << "Result: " << num1 << " + " << num2 << " = " << num1 + num2 << std::endl;
-            break;
-        case '-':
-            std::cout << "Result: " << num1 << " - " << num2 << " = " << num1 - num2 << std::endl;
-            break;
-        case '*':
-            std::cout << "Result: " << num1 << " * " << num2 << " = " << num1 * num2 << std::endl;
-            break;
-        case '/':
-            if (num2 == 0) {
-                std::cout << "Error: division by zero!" << std::endl;
+        if (token == "q") {
+            return true;
+        }
+        
+        if (token == "=") {
+            std::cout << accumulator << std::endl;
+            continue;
+        }
+        
+        if (token == "c") {
+            accumulator = 0;
+            continue;
+        }
+        
+        if (token == "s") {
+            memory = accumulator;
+            has_memory = true;
+            continue;
+        }
+        
+        if (token == "l") {
+            if (!has_memory) {
+                std::cerr << "Error: Memory is empty" << std::endl;
+                return false;
             }
-            else {
-                std::cout << "Result: " << num1 << " / " << num2 << " = " << num1 / num2 << std::endl;
-            }
-            break;
-        default:
-            std::cout << "Error: unknown operation '" << operation << "'" << std::endl;
-            break;
+            accumulator = memory;
+            continue;
         }
-
-        std::cout << "\nContinue? (y/n): ";
-        std::cin >> repeat;
-
-    } while (repeat == 'y' || repeat == 'Y');
-
-    std::cout << "Thank you for using the calculator!" << std::endl;
-
-    return 0;
+        
+        if (token == "+" || token == "-" || token == "*" || 
+            token == "/" || token == "**" || token == ":") {
+            
+            Number operand;
+            if (!ReadNumber(operand)) {
+                std::cerr << "Error: Numeric operand expected" << std::endl;
+                return false;
+            }
+            
+            if (token == "+") {
+                accumulator += operand;
+            } else if (token == "-") {
+                accumulator -= operand;
+            } else if (token == "*") {
+                accumulator *= operand;
+            } else if (token == "/") {
+                accumulator /= operand;
+            } else if (token == "**") {
+                accumulator = std::pow(accumulator, operand);
+            } else if (token == ":") {
+                accumulator = operand;
+            }
+            
+            continue;
+        }
+        
+        std::cerr << "Error: Unknown token " << token << std::endl;
+        return false;
+    }
+    
+    return true;
 }
